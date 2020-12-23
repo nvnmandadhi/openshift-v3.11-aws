@@ -1,0 +1,11 @@
+--- 
+- 
+  gather_facts: false
+  hosts: nodes
+  pre_tasks: 
+    - 
+      name: "install NetworkManager"
+      raw: "sudo yum install -y NetworkManager"
+  tasks: 
+    - name: "enable network-manager"
+      shell: "sudo systemctl enable NetworkManager && sudo systemctl start NetworkManager"

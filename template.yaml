@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  KeyPairName:
+    Description: "The private key used to log in to instances through SSH"
+    Type: 'AWS::EC2::KeyPair::KeyName'
+Resources:
+  Master:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-master
+      - Key:  kubernetes.io/cluster/openshift
+        Value: owned
+      IamInstanceProfile: <iam_role>
+      ImageId: "ami-00e87074e52e6c9f9"
+      InstanceType: "t2.xlarge"
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref OpenshiftMasterSecurityGroup
+        - !Ref OpenshiftInternalSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeType: "io1"
+            Iops: "200"
+            DeleteOnTermination: "true"
+            VolumeSize: "30"
+  Node1:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-node1
+      - Key:  kubernetes.io/cluster/openshift
+        Value: owned
+      IamInstanceProfile: <iam_role>
+      ImageId: "ami-00e87074e52e6c9f9"
+      InstanceType: "t2.xlarge"
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref OpenshiftSSHSecurityGroup
+        - !Ref OpenshiftInternalSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeType: "io1"
+            Iops: "200"
+            DeleteOnTermination: "true"
+            VolumeSize: "30"
+  Node2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: openshift-node2
+      - Key:  kubernetes.io/cluster/openshift
+        Value: owned
+      IamInstanceProfile: <iam_role>
+      ImageId: "ami-00e87074e52e6c9f9"
+      InstanceType: "t2.xlarge"
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref OpenshiftSSHSecurityGroup
+        - !Ref OpenshiftInternalSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeType: "io1"
+            Iops: "200"
+            DeleteOnTermination: "true"
+            VolumeSize: "30"
+  OpenshiftMasterSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: <vpc_id>
+      GroupDescription: Openshift Security Group for Master node
+      Tags:
+      - Key:  kubernetes.io/cluster/openshift
+        Value: owned
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: 0.0.0.0/0
+  OpenshiftSSHSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: <vpc_id>
+      GroupDescription: Openshift Security Group for Internal SSH
+      Tags:
+      - Key:  kubernetes.io/cluster/openshift
+        Value: owned
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref OpenshiftMasterSecurityGroup
+  OpenshiftInternalSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: <vpc_id>
+      GroupDescription: Openshift Security Group for Internal nodes
+  Internal53TCPIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: tcp
+      FromPort: 53
+      ToPort: 53
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
+  Internal8053TCPIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8053
+      ToPort: 8053
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
+  Internal8053UDPIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: udp
+      FromPort: 8053
+      ToPort: 8053
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
+  Internal53UDPIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: udp
+      FromPort: 53
+      ToPort: 53
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
+  Internal2379Ingress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: tcp
+      FromPort: 2379
+      ToPort: 2379
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
+  Internal4789Ingress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: tcp
+      FromPort: 4789
+      ToPort: 4789
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
+  Internal10250Ingress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref OpenshiftInternalSecurityGroup
+      IpProtocol: tcp
+      FromPort: 10250
+      ToPort: 10250
+      SourceSecurityGroupId: !Ref OpenshiftInternalSecurityGroup
